@@ -11,11 +11,11 @@ var Connector = function(host, port, ssl=false, encoding="utf-8") {
 	var _encoding = encoding;
 	if(!ssl) {
 		this.socket = net.connect(port, host, function() {
-			this.emit('socket.connected');
+			this.emit('socket.connected', host, port);
 		});
 	} else {
 		this.socket = tls.connect(port, host, function() {
-			this.emit('socket.connected');
+			this.emit('socket.connected', host, port);
 			this.emit('socket.secured', this.socket.authorized);
 		});
 	}
@@ -27,8 +27,8 @@ var Connector = function(host, port, ssl=false, encoding="utf-8") {
 	this.socket.on('end', function() {
 		this.emit('socket.endreceive');
 	});
-	this.socket.on('close', function() {
-		this.emit('socket.closed');
+	this.socket.on('close', function(had_error) {
+		this.emit('socket.closed', had_error);
 	});
 	this.socket.on('error', function(err) {
 		this.emit('socket.error', err);
@@ -37,9 +37,10 @@ var Connector = function(host, port, ssl=false, encoding="utf-8") {
 	this.close = function() {
 		this.socket.close();
 	};
-	this.send = function(data) {
+	this.send = function(data, callback) {
 		this.socket.write(data, _encoding, function() {
 			this.emit('socket.written', data.length);
+			callback();
 		});
 	};
 };
